@@ -7,36 +7,10 @@
 # 3. Set working directory so you can source R and the dataset
 # 4. source("run_analysis.R")
 # 5. Get cleanData.txt is generated on thesame folder as source
-loadDependencies();
-wearableData <- loadWearableData();
-
-options(warn=-1)
-# 1. Merges the training and the test sets to create one data set.\
-wearableData$mergedData <- mergeTestAndTrainData(wearableData)
-message("1. Merged test and train data succesfully.")
-
-# 2. Extracts only the measurements on the mean and standard deviation for each measurement
-wearableData$mergedData <- meanAndStdColumnsOnly(wearableData)
-message("2. Extracted mean/std measurements successfully.")
-
-# 3. Uses descriptive activity names to name the activities in the data set
-wearableData$mergedData  <- merge(wearableData$mergedData, wearableData$activityLabels, by.x="activityId", by.y="V1")
-wearableData$mergedData  <- rename(wearableData$mergedData, c("V2.y"="activityName"))
-message("3. Addded activity name on the data set succesfully.")
-
-# 4. Appropriately labels the data set with descriptive variable names. 
-variableNames <- lapply(wearableData$features[grepl("mean|std",wearableData$features$V2),]$V2, as.character)
-colnames(wearableData$mergedData) <- c("subject","activityId", variableNames, "activityName")
-message("4. Labeled variable names successfully.")
-
-# 5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
-cleanData <- aggregate(wearableData$mergedData, by=list(activityName = wearableData$mergedData$activityName, subject = wearableData$mergedData$subject), mean)	
-cleanData <- reorganizeColumns(cleanData)
-write.table(cleanData, "cleanData.txt", sep="\t")
-message("5. File cleanData.txt created successfully.")
-
-options(warn=0)
-
+loadDependencies <- function() {
+	# For renaming columns and preserving columns on original data
+	library(plyr)	
+}
 
 # 'UCI HAR Dataset' data must be in same folder as run_analysis.R
 # OUTPUT - loadWearableData()
@@ -71,10 +45,7 @@ loadWearableData <- function() {
 	return(data)
 }
 
-loadDependencies <- function() {
-	# For renaming columns and preserving columns on original data
-	library(plyr)	
-}
+
 
 # Returns combined list of train and test containing merged subjectTest, yTest, xTest
 mergeTestAndTrainData <- function(wearableData) {
@@ -104,3 +75,35 @@ reorganizeColumns <- function(cleanData) {
 
 	return(cleanData)
 }
+
+
+####### Call functinos
+loadDependencies()
+wearableData <- loadWearableData()
+
+options(warn=-1)
+# 1. Merges the training and the test sets to create one data set.\
+wearableData$mergedData <- mergeTestAndTrainData(wearableData)
+message("1. Merged test and train data succesfully.")
+
+# 2. Extracts only the measurements on the mean and standard deviation for each measurement
+wearableData$mergedData <- meanAndStdColumnsOnly(wearableData)
+message("2. Extracted mean/std measurements successfully.")
+
+# 3. Uses descriptive activity names to name the activities in the data set
+wearableData$mergedData  <- merge(wearableData$mergedData, wearableData$activityLabels, by.x="activityId", by.y="V1")
+wearableData$mergedData  <- rename(wearableData$mergedData, c("V2.y"="activityName"))
+message("3. Addded activity name on the data set succesfully.")
+
+# 4. Appropriately labels the data set with descriptive variable names. 
+variableNames <- lapply(wearableData$features[grepl("mean|std",wearableData$features$V2),]$V2, as.character)
+colnames(wearableData$mergedData) <- c("subject","activityId", variableNames, "activityName")
+message("4. Labeled variable names successfully.")
+
+# 5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
+cleanData <- aggregate(wearableData$mergedData, by=list(activityName = wearableData$mergedData$activityName, subject = wearableData$mergedData$subject), mean)	
+cleanData <- reorganizeColumns(cleanData)
+write.table(cleanData, "cleanData.txt", sep="\t")
+message("5. File cleanData.txt created successfully.")
+
+options(warn=0)
